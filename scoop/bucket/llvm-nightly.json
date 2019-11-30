@@ -1,0 +1,69 @@
+{
+    "version": "10.0.0-e20a1e486e1",
+    "description": "Collection of modular and reusable compiler and toolchain technologies.",
+    "homepage": "https://www.llvm.org/",
+    "license": "NCSA",
+    "architecture": {
+        "64bit": {
+            "url": "https://prereleases.llvm.org/win-snapshots/LLVM-10.0.0-e20a1e486e1-win64.exe#/dl.7z",
+            "hash": "05df51622446d08a6955570c4084ee944a5284690d3ffbbb8f1ab0d57128a7c2"
+        }
+    },
+    "pre_install": "Remove-Item \"$dir\\`$*\" -Recurse",
+    "bin": [
+        "bin\\clang++.exe",
+        "bin\\clang-apply-replacements.exe",
+        "bin\\clang-change-namespace.exe",
+        "bin\\clang-check.exe",
+        "bin\\clang-cl.exe",
+        "bin\\clang-cpp.exe",
+        "bin\\clang-doc.exe",
+        "bin\\clang-extdef-mapping.exe",
+        "bin\\clang-format.exe",
+        "bin\\clang-import-test.exe",
+        "bin\\clang-include-fixer.exe",
+        "bin\\clang-offload-bundler.exe",
+        "bin\\clang-query.exe",
+        "bin\\clang-refactor.exe",
+        "bin\\clang-rename.exe",
+        "bin\\clang-reorder-fields.exe",
+        "bin\\clang-scan-deps.exe",
+        "bin\\clang-tidy.exe",
+        "bin\\clang.exe",
+        "bin\\clangd.exe",
+        "bin\\find-all-symbols.exe",
+        "bin\\git-clang-format",
+        "bin\\hmaptool",
+        "bin\\ld.lld.exe",
+        "bin\\ld64.lld.exe",
+        "bin\\lld-link.exe",
+        "bin\\lld.exe",
+        "bin\\lldb-argdumper.exe",
+        "bin\\lldb-instr.exe",
+        "bin\\lldb-mi.exe",
+        "bin\\lldb-vscode.exe",
+        "bin\\lldb.exe",
+        "bin\\llvm-ar.exe",
+        "bin\\llvm-lib.exe",
+        "bin\\llvm-nm.exe",
+        "bin\\llvm-objcopy.exe",
+        "bin\\llvm-objdump.exe",
+        "bin\\llvm-ranlib.exe",
+        "bin\\llvm-rc.exe",
+        "bin\\llvm-symbolizer.exe",
+        "bin\\modularize.exe",
+        "bin\\scan-build.bat",
+        "bin\\wasm-ld.exe"
+    ],
+    "checkver":  {
+       "url": "https://llvm.org/builds/",
+       "re" : "prereleases\\.llvm\\.org\\/win-snapshots\\/LLVM-(\\d+\\.\\d+\\.\\d+-[0-9a-f]+)-win64\\.exe\""
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://prereleases.llvm.org/win-snapshots/LLVM-$version-win64.exe#/dl.7z"
+            }
+        }
+    }
+}
