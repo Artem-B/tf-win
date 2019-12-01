@@ -57,6 +57,9 @@ ARG CUDNN_VERSION=7.6
 COPY scoop\bucket\cudnn-${CUDNN_VERSION}-cuda-${CUDA_VERSION}.json C:\TEMP\scoop\bucket\cudnn.json
 RUN scoop install C:\temp\scoop\bucket\cudnn.json
 
+# Cleanup scoop cache
+RUN scoop cache rm *
+
 # Set path to msys2 binaries. "ENV PATH" does not quite work on windows.
 # https://github.com/moby/moby/issues/22017
 RUN setx path "%path%;C:/Users/ContainerAdministrator/scoop/apps/msys2/current/usr/bin"
