@@ -35,10 +35,31 @@ RUN powershell.exe -ExecutionPolicy RemoteSigned `
 
 RUN scoop install 7zip aria2
 RUN scoop install curl sudo git openssh coreutils grep sed less python
+# Further installs need itcode installed by shellcheck and
+# installing shellcheck requires using powershell
+RUN powershell scoop install shellcheck msys2
 
-COPY scoop C:\TEMP\scoop
-RUN scoop install C:\temp\scoop\bucket\llvm-nightly.json
+COPY scoop\bucket\llvm-nightly.json C:\TEMP\scoop\llvm-nightly.json
+RUN scoop install C:\temp\scoop\llvm-nightly.json
+
+# Tensorflow dependencies
+RUN scoop install bazel
+RUN scoop install unzip patch
+RUN pip3 install six numpy wheel 
+RUN pip3 install keras_applications==1.0.6 --no-deps
+RUN pip3 install keras_preprocessing==1.0.5 --no-deps
+
+ARG CUDA_VERSION=10.1
+COPY scoop\bucket\cuda-${CUDA_VERSION}.json C:\TEMP\scoop\bucket\cuda.json
 RUN scoop install C:\temp\scoop\bucket\cuda.json
 
-WORKDIR "/work"
+ARG CUDNN_VERSION=7.6
+COPY scoop\bucket\cudnn-${CUDNN_VERSION}-cuda-${CUDA_VERSION}.json C:\TEMP\scoop\bucket\cudnn.json
+RUN scoop install C:\temp\scoop\bucket\cudnn.json
+
+# Set path to msys2 binaries. "ENV PATH" does not quite work on windows.
+# https://github.com/moby/moby/issues/22017
+RUN setx path "%path%;C:/Users/ContainerAdministrator/scoop/apps/msys2/current/usr/bin"
+
+WORKDIR "C:/work"
 CMD ["powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass"]

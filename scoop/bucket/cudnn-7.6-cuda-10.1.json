@@ -1,0 +1,22 @@
+{
+    "version": "7.6.4_10.1",
+    "description": "NVIDIA Deep Learning SDK",
+    "homepage": "https://docs.nvidia.com/deeplearning/sdk/index.html",
+    "license": {
+        "identifier": "Freeware",
+        "url": "https://docs.nvidia.com/deeplearning/sdk/cudnn-sla/index.html#license"
+    },
+    "architecture": {
+        "64bit": {
+            "url": "https://anaconda.org/anaconda/cudnn/7.6.4/download/win-64/cudnn-7.6.4-cuda10.1_0.tar.bz2",
+            "hash": "7eaf520b29e89e53419e9acaac8871b6b324d2cd7df2528cc5d2a07ef136e937"
+        }
+    },
+    "extract_dir" : "Library",
+    "env_add_path": [
+        "bin"
+    ],
+    "env_set": {
+        "CUDNN_PATH": "$dir"
+    }
+}
