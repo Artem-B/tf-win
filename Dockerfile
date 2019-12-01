@@ -2,7 +2,7 @@
 
 # Use a specific tagged image. Tags can be changed, though that is unlikely for most images.
 # You could also use the immutable tag @sha256:324e9ab7262331ebb16a4100d0fb1cfb804395a766e3bb1806c62989d1fc1326
-ARG FROM_IMAGE=mcr.microsoft.com/dotnet/framework/sdk:4.8-windowsservercore-ltsc2019
+ARG FROM_IMAGE=mcr.microsoft.com/windows/servercore:1809
 FROM ${FROM_IMAGE}
 
 SHELL ["cmd", "/S", "/C"]
@@ -32,37 +32,21 @@ RUN C:\TEMP\Install.cmd C:\TEMP\vs_buildtools.exe --quiet --wait --norestart --n
 RUN powershell.exe -ExecutionPolicy RemoteSigned `
   iex (new-object net.webclient).downloadstring('https://get.scoop.sh');
 
-
-RUN scoop install 7zip aria2
-RUN scoop install curl sudo git openssh coreutils grep sed less python
-# Further installs need itcode installed by shellcheck and
-# installing shellcheck requires using powershell
-RUN powershell scoop install shellcheck msys2
-
-COPY scoop\bucket\llvm-nightly.json C:\TEMP\scoop\llvm-nightly.json
-RUN scoop install C:\temp\scoop\llvm-nightly.json
-
-# Tensorflow dependencies
-RUN scoop install bazel
-RUN scoop install unzip patch
-RUN pip3 install six numpy wheel 
-RUN pip3 install keras_applications==1.0.6 --no-deps
-RUN pip3 install keras_preprocessing==1.0.5 --no-deps
-
 ARG CUDA_VERSION=10.1
-COPY scoop\bucket\cuda-${CUDA_VERSION}.json C:\TEMP\scoop\bucket\cuda.json
-RUN scoop install C:\temp\scoop\bucket\cuda.json
-
 ARG CUDNN_VERSION=7.6
+COPY scoop\bucket\llvm-nightly.json C:\TEMP\scoop\llvm-nightly.json
+COPY scoop\bucket\cuda-${CUDA_VERSION}.json C:\TEMP\scoop\bucket\cuda.json
 COPY scoop\bucket\cudnn-${CUDNN_VERSION}-cuda-${CUDA_VERSION}.json C:\TEMP\scoop\bucket\cudnn.json
-RUN scoop install C:\temp\scoop\bucket\cudnn.json
 
-# Cleanup scoop cache
-RUN scoop cache rm *
-
-# Set path to msys2 binaries. "ENV PATH" does not quite work on windows.
-# https://github.com/moby/moby/issues/22017
-RUN setx path "%path%;C:/Users/ContainerAdministrator/scoop/apps/msys2/current/usr/bin"
+RUN powershell scoop install -k 7zip aria2 shellcheck; `
+    scoop install -k curl sudo git openssh coreutils grep sed less python msys2 ;`
+    scoop install C:\temp\scoop\llvm-nightly.json; `
+    scoop install -k bazel unzip patch ; `
+    pip3 install six numpy wheel ; `
+    pip3 install keras_applications==1.0.6 --no-deps ;`
+    pip3 install keras_preprocessing==1.0.5 --no-deps ; `
+    scoop install -k C:\temp\scoop\bucket\cuda.json C:\temp\scoop\bucket\cudnn.json ; `
+    scoop cache rm *
 
 WORKDIR "C:/work"
 CMD ["powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass"]
