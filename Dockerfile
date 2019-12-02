@@ -48,5 +48,8 @@ RUN powershell scoop install -k 7zip aria2 shellcheck; `
     scoop install -k C:\temp\scoop\bucket\cuda.json C:\temp\scoop\bucket\cudnn.json ; `
     scoop cache rm *
 
+RUN echo exit | msys2
+ENV MSYS2_PATH_TYPE inherit
+
 WORKDIR "C:/work"
 CMD ["powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass"]
