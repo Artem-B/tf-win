@@ -1,0 +1,131 @@
+# escape=`
+
+# Use a specific tagged image. Tags can be changed, though that is unlikely for most images.
+# You could also use the immutable tag @sha256:324e9ab7262331ebb16a4100d0fb1cfb804395a766e3bb1806c62989d1fc1326
+ARG FROM_IMAGE=mcr.microsoft.com/windows/servercore:1809
+FROM ${FROM_IMAGE}
+
+SHELL ["cmd", "/S", "/C"]
+
+# Copy our Install script.
+COPY Install.cmd C:\TEMP\
+
+# Download collect.exe in case of an install failure.
+ADD https://aka.ms/vscollect.exe C:\TEMP\collect.exe
+
+# Use the latest release channel. For more control, specify the location of an internal layout.
+ARG CHANNEL_URL=https://aka.ms/vs/16/release/channel
+ADD ${CHANNEL_URL} C:\TEMP\VisualStudio.chman
+
+# Download and install Build Tools excluding workloads and components with known issues.
+ADD https://aka.ms/vs/16/release/vs_buildtools.exe C:\TEMP\vs_buildtools.exe
+RUN C:\TEMP\Install.cmd C:\TEMP\vs_buildtools.exe --quiet --wait --norestart --nocache `
+    --installPath C:\BuildTools `
+    --channelUri C:\TEMP\VisualStudio.chman `
+    --installChannelUri C:\TEMP\VisualStudio.chman `
+    --add Microsoft.VisualStudio.Workload.VCTools;includeRecommended
+
+# May need to add ATL to build some windows-specific tools. I think lldb needs it.
+#    --add Microsoft.VisualStudio.Component.VC.ATL
+
+# Install Python and Git.
+RUN powershell.exe -ExecutionPolicy RemoteSigned `
+  iex (new-object net.webclient).downloadstring('https://get.scoop.sh');
+
+ARG CUDA_VERSION=10.1
+ARG CUDNN_VERSION=7.6
+COPY scoop\bucket\llvm-nightly.json C:\TEMP\scoop\llvm-nightly.json
+COPY scoop\bucket\cuda-${CUDA_VERSION}.json C:\TEMP\scoop\bucket\cuda.json
+COPY scoop\bucket\cudnn-${CUDNN_VERSION}-cuda-${CUDA_VERSION}.json C:\TEMP\scoop\bucket\cudnn.json
+
+RUN powershell scoop install -k 7zip aria2 shellcheck; `
+    scoop install -k curl sudo git openssh coreutils grep sed less python msys2 ;`
+    scoop install C:\temp\scoop\llvm-nightly.json; `
+    scoop install -k bazel unzip patch ; `
+    pip3 install six numpy wheel ; `
+    pip3 install keras_applications==1.0.6 --no-deps ;`
+    pip3 install keras_preprocessing==1.0.5 --no-deps ; `
+    scoop install -k C:\temp\scoop\bucket\cuda.json C:\temp\scoop\bucket\cudnn.json ; `
+    scoop cache rm *
+
+RUN echo exit | msys2
+ENV MSYS2_PATH_TYPE inherit
+
+# Environment after running C:\BuildTools\Common7\Tools\VsDevCmd.bat -arch=x64 -host_arch=x64
+# Docker apparently has a bug which always strip trailing backslashes 
+# from 'docker commit -c "ENV FOO c:\\some\\path\\"', so setup_build_env.py can't replicate 
+# the environment exactly and that in turn causes VsDevCmd.bat to fail, because it assumes that
+# VSINSTALLDIR and VCINSTALLDIR have trailing backslashes
+
+ENV ALLUSERSPROFILE C:\ProgramData
+ENV APPDATA C:\Users\ContainerAdministrator\AppData\Roaming
+ENV BAZEL_SH C:\Users\ContainerAdministrator\scoop\apps\msys2\current\usr\bin\bash.exe
+ENV CommandPromptType Native
+ENV CommonProgramFiles C:\Program Files\Common Files
+ENV CommonProgramFiles(x86) C:\Program Files (x86)\Common Files
+ENV COMPUTERNAME 80E44D2878AB
+ENV ComSpec C:\Windows\system32\cmd.exe
+ENV CUDA_PATH C:\Users\ContainerAdministrator\scoop\apps\cuda\current
+ENV CUDNN_PATH C:\Users\ContainerAdministrator\scoop\apps\cudnn\current
+ENV DevEnvDir C:\BuildTools\Common7\IDE\
+ENV DriverData C:\Windows\System32\Drivers\DriverData
+ENV ExtensionSdkDir C:\Program Files (x86)\Microsoft SDKs\Windows Kits\10\ExtensionSDKs
+ENV Framework40Version v4.0
+ENV FrameworkDir C:\Windows\Microsoft.NET\Framework64\
+ENV FrameworkDir64 C:\Windows\Microsoft.NET\Framework64\
+ENV FrameworkVersion v4.0.30319
+ENV FrameworkVersion64 v4.0.30319
+ENV GIT_INSTALL_ROOT C:\Users\ContainerAdministrator\scoop\apps\git\current
+ENV INCLUDE C:\BuildTools\VC\Tools\MSVC\14.23.28105\include;C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\ucrt;C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\shared;C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\um;C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\winrt;C:\Program Files (x86)\Windows Kits\10\include\10.0.18362.0\cppwinrt
+ENV LIB C:\BuildTools\VC\Tools\MSVC\14.23.28105\lib\x64;C:\Program Files (x86)\Windows Kits\10\lib\10.0.18362.0\ucrt\x64;C:\Program Files (x86)\Windows Kits\10\lib\10.0.18362.0\um\x64;
+ENV LIBPATH C:\BuildTools\VC\Tools\MSVC\14.23.28105\lib\x64;C:\BuildTools\VC\Tools\MSVC\14.23.28105\lib\x86\store\references;C:\Program Files (x86)\Windows Kits\10\UnionMetadata\10.0.18362.0;C:\Program Files (x86)\Windows Kits\10\References\10.0.18362.0;C:\Windows\Microsoft.NET\Framework64\v4.0.30319;
+ENV LOCALAPPDATA C:\Users\ContainerAdministrator\AppData\Local
+ENV NUMBER_OF_PROCESSORS 4
+ENV OS Windows_NT
+ENV Path C:\BuildTools\VC\Tools\MSVC\14.23.28105\bin\HostX64\x64;C:\BuildTools\Common7\IDE\CommonExtensions\Microsoft\TestWindow;C:\BuildTools\MSBuild\Current\bin\Roslyn;C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\x64;C:\Program Files (x86)\Windows Kits\10\bin\x64;C:\BuildTools\\MSBuild\Current\Bin;C:\Windows\Microsoft.NET\Framework64\v4.0.30319;C:\BuildTools\Common7\IDE\;C:\BuildTools\Common7\Tools\;C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Users\ContainerAdministrator\scoop\apps\cudnn\current\bin;C:\Users\ContainerAdministrator\scoop\apps\cuda\current\libnvvp;C:\Users\ContainerAdministrator\scoop\apps\cuda\current\bin;C:\Users\ContainerAdministrator\scoop\apps\python\current;C:\Users\ContainerAdministrator\scoop\apps\python\current\Scripts;C:\Users\ContainerAdministrator\scoop\shims;C:\Users\ContainerAdministrator\AppData\Local\Microsoft\WindowsApps;C:\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin;C:\BuildTools\Common7\IDE\CommonExtensions\Microsoft\CMake\Ninja
+ENV PATHEXT .COM;.EXE;.BAT;.CMD;.VBS;.VBE;.JS;.JSE;.WSF;.WSH;.MSC
+ENV PROCESSOR_ARCHITECTURE AMD64
+ENV PROCESSOR_IDENTIFIER Intel64 Family 6 Model 79 Stepping 0, GenuineIntel
+ENV PROCESSOR_LEVEL 6
+ENV PROCESSOR_REVISION 4f00
+ENV ProgramData C:\ProgramData
+ENV ProgramFiles C:\Program Files
+ENV ProgramFiles(x86) C:\Program Files (x86)
+ENV ProgramW6432 C:\Program Files
+ENV PROMPT $P$G
+ENV PSModulePath %ProgramFiles%\WindowsPowerShell\Modules;C:\Windows\system32\WindowsPowerShell\v1.0\Modules
+ENV PUBLIC C:\Users\Public
+ENV SystemDrive C:
+ENV SystemRoot C:\Windows
+ENV TEMP C:\Users\ContainerAdministrator\AppData\Local\Temp
+ENV TMP C:\Users\ContainerAdministrator\AppData\Local\Temp
+ENV UCRTVersion 10.0.18362.0
+ENV UniversalCRTSdkDir C:\Program Files (x86)\Windows Kits\10\
+ENV USERDOMAIN User Manager
+ENV USERNAME ContainerAdministrator
+ENV USERPROFILE C:\Users\ContainerAdministrator
+ENV VCIDEInstallDir C:\BuildTools\Common7\IDE\VC\
+ENV VCINSTALLDIR C:\BuildTools\VC\
+ENV VCToolsInstallDir C:\BuildTools\VC\Tools\MSVC\14.23.28105\
+ENV VCToolsRedistDir C:\BuildTools\VC\Redist\MSVC\14.23.27820\
+ENV VCToolsVersion 14.23.28105
+ENV VisualStudioVersion 16.0
+ENV VS160COMNTOOLS C:\BuildTools\Common7\Tools\
+ENV VSCMD_ARG_app_plat Desktop
+ENV VSCMD_ARG_HOST_ARCH x64
+ENV VSCMD_ARG_TGT_ARCH x64
+ENV VSCMD_VER 16.3.10
+ENV VSINSTALLDIR C:\BuildTools\
+ENV windir C:\Windows
+ENV WindowsLibPath C:\Program Files (x86)\Windows Kits\10\UnionMetadata\10.0.18362.0;C:\Program Files (x86)\Windows Kits\10\References\10.0.18362.0
+ENV WindowsSdkBinPath C:\Program Files (x86)\Windows Kits\10\bin\
+ENV WindowsSdkDir C:\Program Files (x86)\Windows Kits\10\
+ENV WindowsSDKLibVersion 10.0.18362.0\
+ENV WindowsSdkVerBinPath C:\Program Files (x86)\Windows Kits\10\bin\10.0.18362.0\
+ENV WindowsSDKVersion 10.0.18362.0\
+ENV __DOTNET_ADD_64BIT 1
+ENV __DOTNET_PREFERRED_BITNESS 64
+ENV __VSCMD_PREINIT_PATH C:\Windows\system32;C:\Windows;C:\Windows\System32\Wbem;C:\Windows\System32\WindowsPowerShell\v1.0\;C:\Windows\System32\OpenSSH\;C:\Users\ContainerAdministrator\scoop\apps\cudnn\current\bin;C:\Users\ContainerAdministrator\scoop\apps\cuda\current\libnvvp;C:\Users\ContainerAdministrator\scoop\apps\cuda\current\bin;C:\Users\ContainerAdministrator\scoop\apps\python\current;C:\Users\ContainerAdministrator\scoop\apps\python\current\Scripts;C:\Users\ContainerAdministrator\scoop\shims;C:\Users\ContainerAdministrator\AppData\Local\Microsoft\WindowsApps
+
+WORKDIR "C:/work"
+CMD ["powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass"]
