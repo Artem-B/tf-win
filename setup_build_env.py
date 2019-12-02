@@ -7,7 +7,7 @@ import subprocess
 
 def run_cmd(cmd):
     print("Running '%s'" % str(cmd))
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, check=True)
+    result = subprocess.run(cmd, stdout=subprocess.PIPE, check=True, shell=False)
     return result.stdout.decode('utf-8')
 
 
@@ -26,15 +26,23 @@ def get_vsdevcmd_env(image, args):
         if not line.strip():
             continue
         k, v = line.split('=', 1)
+        # Ugh. docker + windows + '\' path separator + ??? 
+        # => multiple ENV commands are glued together.
+        S = "\\"
+        SS = S+S
+        # v = v.replace(S, SS)
+        # if v.endswith(SS):
+        #     # The trailing backslash must be double-quoted?
+        #     v += SS
         docker_env.append("ENV %s %s" % (k, v))
     return docker_env
 
 def get_container_for_image(image):
-    return run_cmd(['docker', 'container', 'ls', '-l', '-q', '-f', 'ancestor=%s' % image]).strip()
+    #return run_cmd(['docker', 'container', 'ls', '-l', '-q', '-f', 'ancestor=%s' % image]).strip()
+    return run_cmd(['docker', 'container', 'create', image]).strip()
 
-def update_docker_image(image, output_image, env):
+def update_docker_image(image, output_image, base_container, env):
     args = []
-    base_container = get_container_for_image(image)
     for line in env:
         args += ['-c', line]
     cmd = ['docker', 'commit'] + args + [base_container, output_image]
@@ -61,12 +69,13 @@ def main():
     output_image = args.output or args.image + "-x64"
     print(args.image, output_image, args.args)
 
+    base_container = get_container_for_image(args.image)
     docker_env = get_vsdevcmd_env(args.image, args.args)
     if args.print:
         print("# Enviroment set by VsCmdArgs %s" % ' '.join(args.args))
         print("\n".join(docker_env))
         return
-    update_docker_image(args.image, output_image, docker_env)
+    update_docker_image(args.image, output_image, base_container, docker_env)
     pass
 
 main()
