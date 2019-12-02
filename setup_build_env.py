@@ -21,19 +21,13 @@ def get_vsdevcmd_env(image, args):
     cmd += ["&", "echo", anchor, "&", "set"]
     result = run_cmd(['docker', 'run', image] + cmd)
     _, env = result.split(anchor)
-    docker_env = []
+    # Got to change escape character to something other than backslash.
+    # https://github.com/docker/for-win/issues/5254
+    docker_env = ['# escape=`']
     for line in env.splitlines():
         if not line.strip():
             continue
         k, v = line.split('=', 1)
-        # Ugh. docker + windows + '\' path separator + ??? 
-        # => multiple ENV commands are glued together.
-        S = "\\"
-        SS = S+S
-        # v = v.replace(S, SS)
-        # if v.endswith(SS):
-        #     # The trailing backslash must be double-quoted?
-        #     v += SS
         docker_env.append("ENV %s %s" % (k, v))
     return docker_env
 
