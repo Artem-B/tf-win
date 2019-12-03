@@ -14,7 +14,7 @@
     },
     "installer": {
         "script": [
-            "$names = @('bin', 'extras', 'include', 'jre', 'lib', 'libnvvp', 'nvml', 'nvvm')",
+            "$names = @('bin', 'extras', 'include', 'jre', 'lib', 'libnvvp', 'nvml', 'nvvm', 'version.txt')",
             "foreach ($name in $names) {",
             "    Copy-Item \"$dir\\*\\$name\" \"$dir\" -Recurse -Force",
             "}",
