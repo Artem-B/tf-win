@@ -51,5 +51,17 @@ RUN powershell scoop install -k 7zip aria2 shellcheck; `
 RUN echo exit | msys2
 ENV MSYS2_PATH_TYPE inherit
 
+# Tensorflow needs patch runnable by msys2's bash.
+RUN msys2 -c "pacman -S --noconfirm patch"
+
+# bazel wants to see 2019 somewhere in the name of the MSVC path
+RUN powershell New-Item -Path C:\BuildTools2019 -ItemType SymbolicLink -Value C:\BuildTools
+
+# Preserve bazel build artifacts in the mounted directory.
+RUN echo startup --output_base=C:/work/bazel-out > %USERPROFILE%\.bazelrc
+
+ENV BAZEL_VS C:/BuildTools2019
+ENV BAZEL_LLVM=C:/Users/ContainerAdministrator/scoop/apps/llvm-nightly/current
+
 WORKDIR "C:/work"
 CMD ["powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass"]
