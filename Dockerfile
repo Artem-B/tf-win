@@ -58,7 +58,9 @@ RUN msys2 -c "pacman -S --noconfirm patch"
 RUN powershell New-Item -Path C:\BuildTools2019 -ItemType SymbolicLink -Value C:\BuildTools
 
 # Preserve bazel build artifacts in the mounted directory.
+# Also keep extracted bazel files outside of container for debugging.
 RUN echo startup --output_base=C:/work/bazel-out > %USERPROFILE%\.bazelrc
+RUN echo startup --install_base=C:/work/bazel-install >> %USERPROFILE%\.bazelrc
 
 ENV BAZEL_VS C:/BuildTools2019
 ENV BAZEL_LLVM=C:/Users/ContainerAdministrator/scoop/apps/llvm-nightly/current
