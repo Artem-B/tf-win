@@ -56,7 +56,7 @@ RUN msys2 -c "pacman -S --noconfirm patch"
 
 ENV SCOOP_APPS C:\Users\ContainerAdministrator\scoop\apps
 # bazel wants to see 2019 somewhere in the name of the MSVC path
-RUN mklink C:\BuildTools2019 C:\BuildTools ; `
+RUN mklink C:\BuildTools2019 C:\BuildTools ;
 
 # Symlink cudnn bits into CUDA directory.
 # It avoids problems further down the road because python under msys2
