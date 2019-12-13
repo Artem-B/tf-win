@@ -28,6 +28,9 @@ def get_vsdevcmd_env(image, args):
         if not line.strip():
             continue
         k, v = line.split('=', 1)
+        # msys2 has trouble handling '\\' or '//'
+        v = v.replace("\\\\", "\\")
+        v = v.replace("//", "/")
         docker_env.append("ENV %s %s" % (k, v))
     return docker_env
 

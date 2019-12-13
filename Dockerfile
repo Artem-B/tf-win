@@ -48,14 +48,26 @@ RUN powershell scoop install -k 7zip aria2 shellcheck; `
     scoop install -k C:\temp\scoop\bucket\cuda.json C:\temp\scoop\bucket\cudnn.json ; `
     scoop cache rm *
 
-RUN echo exit | msys2
+RUN msys2 -c true
 ENV MSYS2_PATH_TYPE inherit
 
 # Tensorflow needs patch runnable by msys2's bash.
 RUN msys2 -c "pacman -S --noconfirm patch"
 
+ENV SCOOP_APPS C:\Users\ContainerAdministrator\scoop\apps
 # bazel wants to see 2019 somewhere in the name of the MSVC path
-RUN powershell New-Item -Path C:\BuildTools2019 -ItemType SymbolicLink -Value C:\BuildTools
+RUN mklink C:\BuildTools2019 C:\BuildTools ; `
+
+# Symlink cudnn bits into CUDA directory.
+# It avoids problems further down the road because python under msys2
+# does not seem to handle lists of multiple paths
+# https://github.com/msys2/MSYS2-packages/issues/761
+# If TF_CUDA_PATHS is set to C:\something,C:\something, it fails with "Bad address" error
+RUN msys2 -c "(cd /c/Users/ContainerAdministrator/scoop/apps/cudnn/current && find . ) `
+    | grep -E '\.(lib|dll|h)' `
+    | xargs -n 1 -I @ `
+      ln -s /c/Users/ContainerAdministrator/scoop/apps/cudnn/current/@ `
+            /c/Users/ContainerAdministrator/scoop/apps/cuda/current/@ "
 
 # Preserve bazel build artifacts in the mounted directory.
 # Also keep extracted bazel files outside of container for debugging.
