@@ -75,6 +75,7 @@ RUN echo startup --output_base=C:/work/bazel-out > %USERPROFILE%\.bazelrc
 RUN echo startup --install_base=C:/work/bazel-install >> %USERPROFILE%\.bazelrc
 
 ENV BAZEL_VS C:/BuildTools2019
+ENV BAZEL_VC C:/BuildTools2019/VC
 ENV BAZEL_LLVM=C:/Users/ContainerAdministrator/scoop/apps/llvm-nightly/current
 
 WORKDIR "C:/work"
