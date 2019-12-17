@@ -78,5 +78,7 @@ ENV BAZEL_VS C:/BuildTools2019
 ENV BAZEL_VC C:/BuildTools2019/VC
 ENV BAZEL_LLVM=C:/Users/ContainerAdministrator/scoop/apps/llvm-nightly/current
 
+RUN scoop install vim
+
 WORKDIR "C:/work"
 CMD ["powershell.exe", "-NoLogo", "-ExecutionPolicy", "Bypass"]
